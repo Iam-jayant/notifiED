@@ -1,0 +1,10 @@
+/* If not using Tailwind's build process, replace the following with the generated Tailwind CSS output */
+/* @tailwind base; */
+/* @tailwind components; */
+/* @tailwind utilities; */
+
+/* Add any custom global styles below */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+}

@@ -19,7 +19,7 @@ import { ArrowRight, Sparkles } from "lucide-react"
 export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("All")
 
-  // Filter events based on selected category and show only first 3
+  // Filter events based on selected category and showing only first 3
   const filteredEvents = mockEvents
     .filter((event) => selectedCategory === "All" || event.category === selectedCategory)
     .slice(0, 3)

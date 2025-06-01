@@ -57,7 +57,7 @@ export default function Navbar() {
               href="/submit-event"
               className={`transition-colors hover:text-primary ${pathname === "/submit-event" ? "text-primary font-medium" : "text-muted-foreground"}`}
             >
-              Submit Event
+              List Your Event
             </Link>
           </div>
 

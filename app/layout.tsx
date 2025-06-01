@@ -9,7 +9,7 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "notifiED - Discover Amazing Events",
   description: "Find and join exciting events, hackathons, workshops, and more",
-    generator: 'v0.dev'
+    generator: 'Jayant Kurekar'
 }
 
 export default function RootLayout({

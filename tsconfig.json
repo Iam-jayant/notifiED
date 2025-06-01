@@ -1,31 +1,27 @@
 {
   "compilerOptions": {
-    "target": "es5", // Target ECMAScript version
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ], // Libraries to include
-    "allowJs": true, // Allow JavaScript files
-    "skipLibCheck": true, // Skip type checking of declaration files
-    "strict": true, // Enable strict type checking
-    "forceConsistentCasingInFileNames": true, // Enforce consistent file naming
-    "noEmit": true, // Do not emit compiled files
-    "esModuleInterop": true, // Enable interoperability between CommonJS and ES modules
-    "moduleResolution": "node", // Resolve modules using Node.js style
-    "resolveJsonModule": true, // Allow importing JSON files
-    "isolatedModules": true, // Ensure each file is treated as a module
-    "jsx": "preserve" // Preserve JSX for Next.js
-    ,
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "target": "ES6",
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
     "incremental": true,
-    "module": "esnext"
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
   },
-  "include": [
-    "next-env.d.ts", // Include Next.js environment types
-    "**/*.ts", // Include all TypeScript files
-    "**/*.tsx" // Include all TypeScript React files
-  ],
-  "exclude": [
-    "node_modules" // Exclude dependencies
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

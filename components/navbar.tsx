@@ -7,20 +7,38 @@ import UserAvatar from "@/components/user-avatar"
 import MobileMenu from "@/components/mobile-menu"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth-context"
 
 export default function Navbar() {
   const pathname = usePathname()
-  const [isLoggedIn, setIsLoggedIn] = useState(false) // This would come from auth context in real app
+  const [mounted, setMounted] = useState(false)
+  const { user, userProfile, loading } = useAuth()
 
-  // Mock user data - in real app this would come from auth context
-  const mockUser = isLoggedIn
-    ? {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        avatar: "/placeholder.svg?height=40&width=40",
-      }
-    : null
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  // Don't render navigation links until mounted to avoid hydration mismatch
+  if (!mounted || loading) {
+    return (
+      <nav className="sticky top-0 z-50 glass-effect border-b">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+            >
+              notifiED
+            </Link>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+            </div>
+          </div>
+        </div>
+      </nav>
+    )
+  }
 
   return (
     <motion.nav
@@ -63,8 +81,14 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            {mockUser ? (
-              <UserAvatar user={mockUser} />
+            {user && userProfile ? (
+              <UserAvatar
+                user={{
+                  name: userProfile.full_name || "User",
+                  email: userProfile.email,
+                  avatar: userProfile.avatar_url || undefined,
+                }}
+              />
             ) : (
               <>
                 <div className="hidden md:flex items-center gap-3">
@@ -72,13 +96,12 @@ export default function Navbar() {
                     <Button
                       asChild
                       className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
-                      onClick={() => setIsLoggedIn(true)}
                     >
                       <Link href="/signup">Join</Link>
                     </Button>
                   </motion.div>
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button asChild variant="ghost" onClick={() => setIsLoggedIn(true)}>
+                    <Button asChild variant="ghost">
                       <Link href="/login">Sign in</Link>
                     </Button>
                   </motion.div>

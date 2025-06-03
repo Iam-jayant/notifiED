@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Search, Filter, SortAsc } from "lucide-react"
 import Navbar from "@/components/navbar"
 import CategoryFilter from "@/components/category-filter"
@@ -8,34 +8,77 @@ import EventCard from "@/components/event-card"
 import Footer from "@/components/footer"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { mockEvents } from "@/lib/mock-data"
+import { EventsAPI } from "@/lib/events-api"
+import type { Event } from "@/lib/supabase"
 import { motion } from "framer-motion"
 
 export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("All")
   const [sortBy, setSortBy] = useState("recent")
+  const [events, setEvents] = useState<Event[]>([])
+  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
-  // Filter and sort events
-  const filteredEvents = mockEvents
-    .filter((event) => {
-      const matchesSearch =
-        event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.theme.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchesCategory = selectedCategory === "All" || event.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "live":
-          return a.status === "Live" ? -1 : 1
-        case "closed":
-          return a.type === "Closed" ? -1 : 1
-        case "recent":
-        default:
-          return 0 // Keep original order for recent
-      }
-    })
+  useEffect(() => {
+    setMounted(true)
+    loadEvents()
+  }, [selectedCategory, searchTerm, sortBy])
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true)
+      const data = await EventsAPI.getEvents({
+        category: selectedCategory,
+        search: searchTerm || undefined,
+      })
+
+      // Sort events based on sortBy
+      const sortedEvents = [...data].sort((a, b) => {
+        switch (sortBy) {
+          case "live":
+            return a.status === "Live" ? -1 : 1
+          case "closed":
+            return a.type === "Closed" ? -1 : 1
+          case "recent":
+          default:
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
+      })
+
+      setEvents(sortedEvents)
+    } catch (error) {
+      console.error("Error loading events:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="container mx-auto px-6 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl md:text-6xl font-bold mb-4">All Events</h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Discover events that match your interests and goals
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-card rounded-2xl p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -92,18 +135,37 @@ export default function EventsPage() {
         <CategoryFilter onCategoryChange={setSelectedCategory} />
 
         {/* Events Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {filteredEvents.map((event, index) => (
-            <EventCard key={event.id} event={event} index={index} />
-          ))}
-        </motion.div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-card rounded-2xl p-6 animate-pulse">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+          >
+            {events.map((event, index) => (
+              <EventCard
+                key={event.id}
+                event={{
+                  ...event,
+                  theme: event.theme ?? "",
+                }}
+                index={index}
+              />
+            ))}
+          </motion.div>
+        )}
 
-        {filteredEvents.length === 0 && (
+        {!loading && events.length === 0 && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}

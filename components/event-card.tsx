@@ -2,21 +2,12 @@
 
 import { Calendar, MapPin, Users, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import SocialShare from "@/components/social-share"
+import { SocialShare } from "@/components/dynamic-components"
 import { motion } from "framer-motion"
+import type { Event } from "@/lib/supabase"
 
 interface EventCardProps {
-  event: {
-    id: string
-    title: string
-    theme: string
-    date: string
-    location: string
-    status: "Live" | "Offline" | "Online"
-    type: "Open" | "Closed"
-    participants?: number
-    tags?: string[]
-  }
+  event: Event
   index?: number
 }
 
@@ -31,7 +22,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
     >
       <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-purple-600/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-      <div className="relative bg-card/80 backdrop-blur-sm rounded-2xl border border-border/50 p-6 hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl">
+      <div className="relative bg-card backdrop-blur-sm rounded-2xl border border-border p-6 hover:border-primary/50 transition-all duration-300 shadow-lg hover:shadow-xl">
+        {/* Share Button in Top-Right Corner */}
+        <div className="absolute top-4 right-4">
+          <SocialShare title={event.title} />
+        </div>
+
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1">
             <motion.h3
@@ -41,13 +37,6 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               {event.title}
             </motion.h3>
             <p className="text-muted-foreground text-sm">{event.theme}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {event.tags?.map((tag) => (
-              <span key={tag} className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full font-medium">
-                {tag}
-              </span>
-            ))}
           </div>
         </div>
 
@@ -69,14 +58,14 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
         </div>
 
         <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium ${
                 event.status === "Live"
                   ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
                   : event.status === "Online"
-                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
-                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                  ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400"
+                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
               }`}
             >
               {event.status}
@@ -91,15 +80,12 @@ export default function EventCard({ event, index = 0 }: EventCardProps) {
               {event.type}
             </span>
           </div>
-          <div className="flex gap-2">
-            <SocialShare title={event.title} />
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white group">
-                Apply Now
-                <ExternalLink className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </motion.div>
-          </div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white group">
+              Apply Now
+              <ExternalLink className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+            </Button>
+          </motion.div>
         </div>
       </div>
     </motion.div>

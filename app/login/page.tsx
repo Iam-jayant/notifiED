@@ -10,32 +10,58 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Github } from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 export default function LoginPage() {
   const router = useRouter()
+  const { signIn } = useAuth()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle login logic here
-    console.log("Login attempt:", formData)
-    // Redirect to profile setup after successful login
-    router.push("/profile-setup")
+    setLoading(true)
+    setError("")
+
+    try {
+      await signIn(formData.email, formData.password)
+      router.push("/profile")
+    } catch (error: any) {
+      setError(error.message || "Failed to sign in")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogleLogin = () => {
-    // Handle Google OAuth
-    console.log("Google login")
-    router.push("/profile-setup")
+  const handleGoogleLogin = async () => {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/profile-setup`,
+      },
+    })
+    if (error) {
+      setError(error.message)
+    }
   }
 
-  const handleGithubLogin = () => {
-    // Handle GitHub OAuth
-    console.log("GitHub login")
-    router.push("/profile-setup")
+  const handleGithubLogin = async () => {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${window.location.origin}/profile-setup`,
+      },
+    })
+    if (error) {
+      setError(error.message)
+    }
   }
 
   return (
@@ -46,13 +72,17 @@ export default function LoginPage() {
           <CardDescription>Sign in to your notifiED account</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md text-sm">{error}</div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email or Phone</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email or phone"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -71,8 +101,8 @@ export default function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Sign In
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+              {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
 

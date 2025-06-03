@@ -1,7 +1,5 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -9,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Github } from "lucide-react"
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -16,11 +15,39 @@ export default function SignUpPage() {
     password: "",
     confirmPassword: "",
   })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Handle signup logic here
-    console.log("Signup attempt:", formData)
+    setLoading(true)
+    setError("")
+    setSuccess("")
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
+
+    try {
+      const supabase = getSupabaseClient()
+      const { error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess("Account created successfully! Please check your email to confirm your account.")
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during signup.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleGoogleSignUp = () => {
@@ -41,13 +68,16 @@ export default function SignUpPage() {
           <CardDescription>Create your account to discover amazing events</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+          {success && <div className="text-green-600 text-sm">{success}</div>}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email or Phone</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="Enter your email or phone"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
@@ -78,8 +108,8 @@ export default function SignUpPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700">
-              Sign Up
+            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading}>
+              {loading ? "Signing up..." : "Sign Up"}
             </Button>
           </form>
 

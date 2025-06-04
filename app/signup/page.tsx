@@ -2,14 +2,17 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Github } from "lucide-react"
-import { getSupabaseClient } from "@/lib/supabase-client"
+import { auth } from "@/lib/firebase-client"
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth"
 
 export default function SignUpPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -32,17 +35,9 @@ export default function SignUpPage() {
     }
 
     try {
-      const supabase = getSupabaseClient()
-      const { error } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-      })
-
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess("Account created successfully! Please check your email to confirm your account.")
-      }
+      await createUserWithEmailAndPassword(auth, formData.email, formData.password)
+      setSuccess("Account created successfully!")
+      router.push("/profile") // Redirect to profile page
     } catch (err: any) {
       setError(err.message || "An error occurred during signup.")
     } finally {
@@ -50,14 +45,30 @@ export default function SignUpPage() {
     }
   }
 
-  const handleGoogleSignUp = () => {
-    // Handle Google OAuth
-    console.log("Google signup")
+  const handleGoogleSignUp = async () => {
+    const provider = new GoogleAuthProvider()
+    try {
+      const result = await signInWithPopup(auth, provider)
+      const user = result.user
+
+      setSuccess("Signed in with Google successfully!")
+      router.push("/profile") // Redirect to profile page
+    } catch (err: any) {
+      setError(err.message || "An error occurred during Google signup.")
+    }
   }
 
-  const handleGithubSignUp = () => {
-    // Handle GitHub OAuth
-    console.log("GitHub signup")
+  const handleGithubSignUp = async () => {
+    const provider = new GithubAuthProvider()
+    try {
+      const result = await signInWithPopup(auth, provider)
+      const user = result.user
+
+      setSuccess("Signed in with GitHub successfully!")
+      router.push("/profile") // Redirect to profile page
+    } catch (err: any) {
+      setError(err.message || "An error occurred during GitHub signup.")
+    }
   }
 
   return (

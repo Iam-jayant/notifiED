@@ -8,19 +8,27 @@ import MobileMenu from "@/components/mobile-menu"
 import { usePathname } from "next/navigation"
 import { motion } from "framer-motion"
 import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
+import { auth } from "@/lib/firebase-client"
+import { onAuthStateChanged, User } from "firebase/auth"
 
 export default function Navbar() {
   const pathname = usePathname()
   const [mounted, setMounted] = useState(false)
-  const { user, userProfile, loading } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     setMounted(true)
+
+    // Listen for Firebase auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser)
+    })
+
+    return () => unsubscribe() // Cleanup the listener on unmount
   }, [])
 
   // Don't render navigation links until mounted to avoid hydration mismatch
-  if (!mounted || loading) {
+  if (!mounted) {
     return (
       <nav className="sticky top-0 z-50 glass-effect border-b">
         <div className="container mx-auto px-6 py-4">
@@ -81,12 +89,12 @@ export default function Navbar() {
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            {user && userProfile ? (
+            {user ? (
               <UserAvatar
                 user={{
-                  name: userProfile.full_name || "User",
-                  email: userProfile.email,
-                  avatar: userProfile.avatar_url || undefined,
+                  name: user.displayName || "User",
+                  email: user.email || "",
+                  avatar: user.photoURL || undefined,
                 }}
               />
             ) : (

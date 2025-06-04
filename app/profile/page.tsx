@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { auth } from "@/lib/firebase-client"
 import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
-import { getSupabaseClient } from "@/lib/supabase-client"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -12,63 +11,72 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-const supabase = getSupabaseClient()
-
 export default function ProfilePage() {
   const router = useRouter()
-  const [isEditing, setIsEditing] = useState(true) // Start in editing mode
+  const [isEditing, setIsEditing] = useState(true)
   const [profileData, setProfileData] = useState({
     name: "",
     email: "",
-    city: "",
     college: "",
-    education: "UG Program", // Default value for dropdown
+    education: "UG Program",
   })
 
+  // Load user data from Firebase Auth and localStorage
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setProfileData((prev) => ({
-          ...prev,
-          name: user.displayName || "",
-          email: user.email || "",
-        }))
+        // Try to get saved data from localStorage
+        const savedData = localStorage.getItem(`profile_${user.uid}`)
+        if (savedData) {
+          setProfileData(JSON.parse(savedData))
+        } else {
+          // If no saved data, use Firebase user data
+          setProfileData({
+            name: user.displayName || "",
+            email: user.email || "",
+            college: "",
+            education: "UG Program",
+          })
+        }
+      } else {
+        // If no user is signed in, redirect to login
+        router.push('/login')
       }
     })
 
     return () => unsubscribe()
-  }, [])
+  }, [router])
 
-  const handleSave = async () => {
+  const handleSave = () => {
+    // Validate required fields
+    if (!profileData.name || !profileData.college || !profileData.education) {
+      alert("Please fill in all required fields")
+      return
+    }
+
     try {
-      // Save data to Supabase
-      const { error } = await supabase.from("profile").upsert({
-        name: profileData.name,
-        email: profileData.email,
-        city: profileData.city,
-        college: profileData.college,
-        education: profileData.education,
-      })
-
-      if (error) {
-        console.error("Error saving profile data:", error.message)
-        return
+      // Save to localStorage with user ID as part of the key
+      const user = auth.currentUser
+      if (user) {
+        localStorage.setItem(`profile_${user.uid}`, JSON.stringify(profileData))
+        setIsEditing(false)
+        router.push("/") // Redirect to home page after saving
       }
-
-      setIsEditing(false)
-      router.push("/") // Redirect to home page after saving
-    } catch (err) {
-      console.error("Error saving profile data:", err)
+    } catch (error) {
+      console.error("Error saving profile data:", error)
+      alert("Failed to save profile data. Please try again.")
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="w-full">
+        <Navbar />
+      </div>
 
-      <div className="container mx-auto px-6 py-8">
+      <div className="flex-1 container mx-auto px-6 py-8">
         <div className="max-w-2xl mx-auto">
-          <Card>
+          <Card className="shadow-lg">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -76,8 +84,11 @@ export default function ProfilePage() {
                   <CardDescription>Manage your personal information</CardDescription>
                 </div>
                 {isEditing && (
-                  <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700">
-                    Save
+                  <Button 
+                    onClick={handleSave} 
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Save Changes
                   </Button>
                 )}
               </div>
@@ -85,38 +96,36 @@ export default function ProfilePage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="required">Full Name</Label>
                   <Input
                     id="name"
                     value={profileData.name}
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                     disabled={!isEditing}
+                    placeholder="Enter your full name"
+                    required
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" value={profileData.email} disabled />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={profileData.city}
-                    onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
-                    disabled={!isEditing}
+                  <Input 
+                    id="email" 
+                    value={profileData.email} 
+                    disabled 
+                    className="bg-gray-50 dark:bg-gray-800"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="education">Area of Study</Label>
+                  <Label htmlFor="education" className="required">Area of Study</Label>
                   <select
                     id="education"
                     value={profileData.education}
                     onChange={(e) => setProfileData({ ...profileData, education: e.target.value })}
                     disabled={!isEditing}
-                    className="w-full px-3 py-2 border rounded-md text-sm"
+                    className="w-full px-3 py-2 border rounded-md text-sm focus:ring-2 focus:ring-blue-500"
+                    required
                   >
                     <option value="highschool">Highschool</option>
                     <option value="preuniversity">Pre-University</option>
@@ -127,13 +136,15 @@ export default function ProfilePage() {
                   </select>
                 </div>
 
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="college">College Name</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="college" className="required">College Name</Label>
                   <Input
                     id="college"
                     value={profileData.college}
                     onChange={(e) => setProfileData({ ...profileData, college: e.target.value })}
                     disabled={!isEditing}
+                    placeholder="Enter your college name"
+                    required
                   />
                 </div>
               </div>

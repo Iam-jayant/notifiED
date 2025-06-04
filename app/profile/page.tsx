@@ -4,12 +4,15 @@ import { useState, useEffect } from "react"
 import { auth } from "@/lib/firebase-client"
 import { onAuthStateChanged } from "firebase/auth"
 import { useRouter } from "next/navigation"
+import { getSupabaseClient } from "@/lib/supabase-client"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+const supabase = getSupabaseClient()
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -19,26 +22,44 @@ export default function ProfilePage() {
     email: "",
     city: "",
     college: "",
+    education: "UG Program", // Default value for dropdown
   })
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        setProfileData({
+        setProfileData((prev) => ({
+          ...prev,
           name: user.displayName || "",
           email: user.email || "",
-          city: "",
-          college: "",
-        })
+        }))
       }
     })
 
     return () => unsubscribe()
   }, [])
 
-  const handleSave = () => {
-    setIsEditing(false)
-    router.push("/") // Redirect to home page after saving
+  const handleSave = async () => {
+    try {
+      // Save data to Supabase
+      const { error } = await supabase.from("profile").upsert({
+        name: profileData.name,
+        email: profileData.email,
+        city: profileData.city,
+        college: profileData.college,
+        education: profileData.education,
+      })
+
+      if (error) {
+        console.error("Error saving profile data:", error.message)
+        return
+      }
+
+      setIsEditing(false)
+      router.push("/") // Redirect to home page after saving
+    } catch (err) {
+      console.error("Error saving profile data:", err)
+    }
   }
 
   return (
@@ -86,6 +107,24 @@ export default function ProfilePage() {
                     onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
                     disabled={!isEditing}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="education">Area of Study</Label>
+                  <select
+                    id="education"
+                    value={profileData.education}
+                    onChange={(e) => setProfileData({ ...profileData, education: e.target.value })}
+                    disabled={!isEditing}
+                    className="w-full px-3 py-2 border rounded-md text-sm"
+                  >
+                    <option value="highschool">Highschool</option>
+                    <option value="preuniversity">Pre-University</option>
+                    <option value="ug">UG Program</option>
+                    <option value="pg">PG Program</option>
+                    <option value="diploma">Diploma</option>
+                    <option value="other">Other</option>
+                  </select>
                 </div>
 
                 <div className="space-y-2 md:col-span-2">

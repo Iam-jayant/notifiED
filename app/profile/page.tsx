@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { auth } from "@/lib/firebase-client"
 import { onAuthStateChanged } from "firebase/auth"
+import { useRouter } from "next/navigation"
 import Navbar from "@/components/navbar"
 import Footer from "@/components/footer"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [isEditing, setIsEditing] = useState(true) // Start in editing mode
   const [profileData, setProfileData] = useState({
     name: "",
@@ -36,6 +38,7 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     setIsEditing(false)
+    router.push("/") // Redirect to home page after saving
   }
 
   return (

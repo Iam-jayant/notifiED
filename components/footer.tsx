@@ -103,7 +103,7 @@ export default function Footer() {
               © 2025 notifiED. All rights reserved.
             </p>
             <p className="text-muted-foreground flex items-center gap-2 text-sm">
-              Made with <Heart className="h-4 w-4 text-red-500 animate-pulse" /> for the community
+              Made with <Heart className="h-4 w-4 text-red-500 animate-pulse" /> by the Team notifiED
             </p>
           </div>
         </motion.div>

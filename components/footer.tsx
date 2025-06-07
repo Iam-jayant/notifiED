@@ -61,7 +61,7 @@ export default function Footer() {
               title: "Resources",
               links: [
                 { name: "Blog", href: "./blog" },
-                { name: "Help Center", href: "#" },
+                { name: "Help Center", href: "admin@notified.tech" },
                 { name: "Community", href: "#" },
               ],
             },

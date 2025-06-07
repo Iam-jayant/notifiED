@@ -60,7 +60,7 @@ export default function Footer() {
             {
               title: "Resources",
               links: [
-                { name: "Blog", href: "#" },
+                { name: "Blog", href: "./blog" },
                 { name: "Help Center", href: "#" },
                 { name: "Community", href: "#" },
               ],

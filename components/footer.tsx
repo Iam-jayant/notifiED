@@ -62,7 +62,7 @@ export default function Footer() {
               links: [
                 { name: "Blog", href: "./blog" },
                 { name: "Help Center", href: "admin@notified.tech" },
-                { name: "Community", href: "#" },
+                { name: "Community", href: "Not found" },
               ],
             },
           ].map((section, sectionIndex) => (
